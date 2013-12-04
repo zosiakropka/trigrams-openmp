@@ -9,28 +9,16 @@
 #define	UTILS_H
 
 #include <iostream>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 
-typedef unsigned int unsint;
-typedef unsigned long unslong;
-
-using std::cout;
-using std::endl;
 
 void usage(const char* name, const char* arguments);
 
-int i2a(size_t number, char** str);
-size_t a2i(char* str);
+int long2a(u_long number, char** str);
+u_long a2long(char* str);
 
-class Timer {
-private:
-    double time;
 
-public:
-    double get_seconds();
-    void add(double interval);
-};
 
 #endif	/* UTILS_H */
 

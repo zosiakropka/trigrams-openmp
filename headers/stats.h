@@ -11,33 +11,36 @@
 #include <sstream>
 
 #include "utils.h"
+#include "timer.h"
 
 using namespace std;
 
 #ifndef	STATS_H
 #define     STATS_H
 
-#define NULL_CHAR (char) 0
+#define NULL_CH '\0'
+#define NL_CH '\n'
+#define TAB_CH '\t'
 
+/**
+ * Class collecting trigram stats
+ */
 class TrigramStats {
 public:
 
-    static const unslong POSSIBILITIES = 265 * 265 * 265 * sizeof (char);
+    typedef u_int32_t tr_int;
+    static const tr_int POSSIBILITIES = 265 * 265 * 265 * sizeof (char);
 
-    struct entry {
-        char trigram[4];
-        unslong occurances;
-        double frequency;
-    };
-
-    Timer* timer;
-
-    unslong *occurances;
-    double frequency(unslong index);
+    /**
+     * Frequency getter of the trigram with given index
+     * @param index
+     * @return frequency (occurances / total)
+     */
+    double inline frequency(tr_int index) {
+        return (double) occurances[index] / (double) total;
+    }
 
     char* lang;
-
-    size_t total;
 
     TrigramStats();
     TrigramStats(char* lang);
@@ -49,31 +52,44 @@ public:
      * @param inputs
      * @param count
      */
-    void process(char** input_fnames, int count);
+    void process(char** input_fnames, u_int count);
     void process(const char* input_fname);
 
-    void open();
-    void save();
+    void open_stats();
+    void save_stats();
 
-    static const char * COUNT_SUFFIX;
+    /** Suffix of the files containing language trigram stats */
     static const char * DAT_SUFFIX;
+
 
 private:
 
-    void t2i(char* trigram, unslong* index);
+    /** Common timer */
+    Timer* timer;
 
-    void i2t(const unslong* index, char* trigram);
+    /** Convert 3-character trigram into tr_int number 
+     * (further used as index in occurances counter) */
+    void trigram2index(char* trigram, tr_int* index);
 
-    static const unsigned int LEN = 3;
+    /** Occurances counter. Its indexes are strings numberized by t2index() */
+    tr_int *occurances;
+
+    /** Total number of non-unique trigrams in analyzed texts*/
+    u_long total;
 
     /**
-     * Process text and store analyze to given stats container.
+     * Process text and store analyze
      * 
      * @param text text to analyze
-     * @param size size of the text to analyze
+     * @param txt_len length of the text to analyze
      */
-    void process_text(char* text, size_t size);
+    void process_text(char* text, u_long txt_len);
 
+    /** Initialize stuff*/
+    void init();
+
+    /** Length of trigram, just for convenience */
+    static const u_int LEN = 3;
 };
 
 #endif	/* STATS_H */

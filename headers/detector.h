@@ -11,37 +11,62 @@
 #include <iostream>
 #include <dirent.h>
 #include "stats.h"
+#include "timer.h"
 
 using std::cout;
 
-class Detector {
+class LangDetector {
 public:
 
+    /**
+     * Name of the file to be tested for language adherence
+     * @param test_fname
+     */
+    LangDetector();
+    
+    void text_feed(char* test_fname);
+    
+    virtual ~LangDetector();
+    
+    /** Structure for accessing detection results */
     struct entry {
         const char* lang;
         double probability;
     };
 
-    Timer* timer;
-
-    Detector(char* test_fname, Timer* timer);
-    Detector(TrigramStats* tested_stats, TrigramStats* reference_stats, unsigned int reference_count);
-    virtual ~Detector();
+    /**
+     * Run detection test for text detector was feeded with.
+     */
     void process();
 
-    entry get_entry(unsigned int index);
+    u_int ref_lang_count;
 
-    unsigned int ref_lang_count;
+    /**
+     * Get language and ratio for index'th best result. detector[0] is the 
+     * best one
+     * @param index
+     * @return stats for index'th result
+     */
+    entry operator[](u_int sorted_index);
 
 private:
+    Timer* timer;
+
     TrigramStats* refer_stats;
     TrigramStats* tst_stats;
 
     double* probabilities;
-    
-    unsigned int* indexes;
 
-    void process(unsigned int index);
+    /**
+     */
+    u_int* indexes;
+
+    /**
+     * Process single language no index
+     * @param index
+     */
+    void process(u_int index);
+
     /**
      * Scans current directory, searching for files named '*.dat'. Extracts language
      * codes from those filenames and creates array of them so that langs points
@@ -50,8 +75,11 @@ private:
      * @param langs where lang codes should be stored
      * @return number of detected lang codes
      */
-    static unsigned int get_saved_stats_langs(char*** langs);
-    
+    static u_int get_saved_stats_langs(char*** langs);
+
+    /**
+     * Fills map of sorted indexes
+     */
     void fill_sorted_indexes();
 };
 

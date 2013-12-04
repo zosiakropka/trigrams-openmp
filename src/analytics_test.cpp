@@ -15,7 +15,7 @@
 
 using namespace std;
 
-void analyze(char* lang, char** inputs, int count);
+void analyze(char* lang, char** inputs, u_int count, u_int iterations);
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -37,28 +37,35 @@ int main(int argc, char** argv) {
     int threads = atoi(argv[1]);
     char* language = argv[2];
     char** inputs = &argv[3];
-    int inputs_count = argc - 3;
+    u_int inputs_count = (u_int) argc - 3;
 
     if (threads != 0) {
         omp_set_num_threads(threads);
     }
 
-    analyze(language, inputs, inputs_count);
+    u_int iterations = 1;
+    const char* testrun = getenv("TESTRUN");
+    if (testrun != NULL && (*testrun) == 'y') {
+        iterations = 1000;
+    }
+
+    analyze(language, inputs, inputs_count, iterations);
+    Timer* timer = Timer::instance();
+    cout << (*timer) << timer->delimiter;
 
     return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void analyze(char* lang, char** inputs, int count) {
+void analyze(char* lang, char** inputs, u_int count, u_int iterations) {
 
-    Timer* timer = new Timer();
     TrigramStats stats(lang);
-    stats.timer = timer;
-    stats.process(inputs, count);
-    stats.save();
-    
-    cout << timer->get_seconds() << "s" << endl;
+    for (u_int i = 0; i < iterations; i++)
+        stats.process(inputs, count);
+
+    stats.save_stats();
+
 }
 
 

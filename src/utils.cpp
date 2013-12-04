@@ -1,13 +1,13 @@
 #include "../headers/utils.h"
 
 void usage(const char* name, const char* arguments) {
-    cout << "Usage: " << name << ' ' << arguments << endl;
+    std::cout << "Usage: " << name << ' ' << arguments << std::endl;
     exit(64);
 }
 
-int i2a(size_t number, char** str) {
+int long2a(u_long number, char** str) {
     int length = 0;
-    int tmp = number;
+    u_long tmp = number;
     while (tmp > 0) {
         tmp /= 10;
         length++;
@@ -16,16 +16,9 @@ int i2a(size_t number, char** str) {
     return sprintf((*str), "%zu", number);
 }
 
-size_t a2i(char* str) {
+u_long a2long(char* str) {
     char* endptr;
     return strtoul(str, &endptr, 0);
 }
 
-double Timer::get_seconds() {
-    return time;
-}
-
-void Timer::add(double interval) {
-    #pragma omp atomic
-    time += interval;
-}
+//////////////////////////////////////////////////////////////////////////////

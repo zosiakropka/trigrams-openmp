@@ -8,21 +8,23 @@
 #include "../headers/stats.h"
 #include <omp.h>
 
-#define NULLCH '\0'
-
-const char * TrigramStats::COUNT_SUFFIX = ".count";
 const char * TrigramStats::DAT_SUFFIX = ".dat";
 
 TrigramStats::TrigramStats() {
 
-    this->occurances = new unslong[POSSIBILITIES];
-    this->total = 0;
+    init();
 }
 
 TrigramStats::TrigramStats(char* lang) {
+    init();
     this->lang = lang;
-    this->occurances = new unslong[POSSIBILITIES];
+}
+
+void TrigramStats::init() {
+    this->occurances = new tr_int[POSSIBILITIES];
     this->total = 0;
+    timer = Timer::instance();
+
 }
 
 TrigramStats::~TrigramStats() {
@@ -32,14 +34,9 @@ TrigramStats::~TrigramStats() {
     }
 }
 
-double TrigramStats::frequency(unslong index) {
+void TrigramStats::process(char** input_fnames, u_int count) {
 
-    return (double) occurances[index] / (double) total;
-}
-
-void TrigramStats::process(char** input_fnames, int count) {
-
-    for (int i = 0; i < count; i++) { // For each given file
+    for (u_int i = 0; i < count; i++) { // For each given file
 
         const char* input_fname = input_fnames[i];
         process(input_fname);
@@ -53,18 +50,18 @@ void TrigramStats::process(const char* input_fname) {
 
     if (ifs.is_open()) {
 
-        // File size
+        // Find file len
         ifs.seekg(0, ios::end);
-        size_t size = (size_t) ifs.tellg();
+        u_long txt_len = (u_long) ifs.tellg();
         ifs.seekg(0, ios::beg);
-        size -= (size_t) ifs.tellg();
+        txt_len -= (u_long) ifs.tellg();
 
-        text = new char[size];
+        text = new char[txt_len];
 
-        ifs.read(text, size);
+        ifs.read(text, txt_len);
         if (!(ifs.fail())) {
-            total += size;
-            process_text(text, size);
+            total += txt_len;
+            process_text(text, txt_len);
         } else {
             cerr << "Cannot read file " << input_fname << endl;
         }
@@ -75,83 +72,55 @@ void TrigramStats::process(const char* input_fname) {
     }
 }
 
-void TrigramStats::t2i(char* trigram, unslong* index) {
-    (*index) = 0;
-    for (unsint i = 0; i < LEN; i++) {
-        if ((short) trigram[i] < 32) {
-            trigram[i] = ' ';
-        }
-    }
+void TrigramStats::trigram2index(char* trigram, tr_int* index) {
+    // 16776769 - endianism-safe 0xFFFF00 => cast to 3 chars and '\0'
+    (*index) = (*((tr_int*) trigram)) & 16776769;
     memcpy(index, trigram, LEN * sizeof (char));
 }
 
-void TrigramStats::i2t(const unslong* index, char* trigram) {
-    memcpy(trigram, index, LEN * sizeof (char));
-    trigram[LEN] = '\0';
-}
-
-
-void TrigramStats::process_text(char* text, size_t size) {
+void TrigramStats::process_text(char* text, u_long txt_len) {
 
     double time = omp_get_wtime();
-    //#pragma omp parallel for
-    for (unslong i = 0; i < size - 2; i++) {
-        unslong index;
-        t2i(text + i, &index);
-        //#pragma omp atomic
+    #pragma omp parallel for
+    for (tr_int tr_i = 0; tr_i < txt_len - 2; tr_i++) {
+        tr_int index;
+        trigram2index(text + tr_i, &index);
+        #pragma omp atomic
         occurances[index]++;
-        char* trigram = new char[LEN + 1];
-        i2t(&index, trigram);
     }
     time = (omp_get_wtime() - time);
     timer->add(time);
 }
 
-void TrigramStats::save() {
+void TrigramStats::save_stats() {
     ofstream ofs;
 
     ofs.open(string(lang).append(DAT_SUFFIX).c_str());
-    char* trigram = new char[LEN + 1];
-    for (unslong i = 0; i < POSSIBILITIES; i++) {
+    for (tr_int i = 0; i < POSSIBILITIES; i++) {
         if (occurances[i] > 0) {
-            i2t(&i, trigram);
-            ofs << trigram << '\t' << occurances[i] << endl;
+            // content of (char*) &i equals to i'th available trigram
+            ofs << (char*) &i << TAB_CH << occurances[i] << endl;
         }
     }
     ofs.close();
 
-    //    ofs.open(string(lang).append(COUNT_SUFFIX).c_str());
-    //    ofs << total << '\t' << POSSIBILITIES;
-    //    ofs.close();
 }
 
-void TrigramStats::open() {
-    //    ifstream ifs_count(string(lang).append(COUNT_SUFFIX).c_str());
-    //    if (ifs_count.is_open()) {
-    //        size_t tmp_size = 100;
-    //        char tmp[100];
-    //        memset(tmp, '\0', tmp_size);
-    //        ifs_count.getline(tmp, tmp_size, '\t');
-    //        total = a2i(tmp);
-    //        memset(tmp, '\0', tmp_size);
-    //        ifs_count.getline(tmp, tmp_size, '\t');
-    //        POSSIBILITIES = a2i(tmp);
-    //    }
-    //    ifs_count.close();
+void TrigramStats::open_stats() {
 
     ifstream ifs(string(lang).append(DAT_SUFFIX).c_str());
     if (ifs.is_open()) {
 
         char trigram[LEN + 1];
-        trigram[LEN] = '\0';
-        unslong index;
+        trigram[LEN] = NULL_CH;
+        tr_int index;
         while (!ifs.eof()) {
-            ifs.getline(trigram, LEN + 1, '\t');
-            t2i(trigram, &index);
+            ifs.getline(trigram, LEN + 1, TAB_CH);
+            trigram2index(trigram, &index);
             char occ_str[100];
-            memset(occ_str, '\0', 50);
-            ifs.getline(occ_str, 50, '\n');
-            total += (occurances[index] = a2i(occ_str));
+            memset(occ_str, NULL_CH, 50);
+            ifs.getline(occ_str, 50, NL_CH);
+            total += (occurances[index] = a2long(occ_str));
 
         }
     }
@@ -159,10 +128,3 @@ void TrigramStats::open() {
     ifs.close();
 }
 
-
-//TrigramStats::entry TrigramStats::operator[](size_t index) {
-//    struct entry e;
-//    e.trigram = trigrams[index];
-//    e.occurances = occurances[index];
-//    return e;
-//}

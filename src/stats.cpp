@@ -98,7 +98,7 @@ void TrigramStats::save_stats() {
     ofs.open(string(lang).append(DAT_SUFFIX).c_str());
     for (tr_int i = 0; i < POSSIBILITIES; i++) {
         if (occurances[i] > 0) {
-            // content of (char*) &i equals to i'th available trigram
+            // content of `(char*) &i` equals to string of i'th available trigram
             ofs << (char*) &i << TAB_CH << occurances[i] << endl;
         }
     }

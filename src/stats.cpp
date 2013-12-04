@@ -32,7 +32,7 @@ TrigramStats::~TrigramStats() {
     }
 }
 
-double TrigramStats::frequency(size_t index) {
+double TrigramStats::frequency(unslong index) {
 
     return (double) occurances[index] / (double) total;
 }

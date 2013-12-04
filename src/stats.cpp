@@ -75,6 +75,22 @@ void TrigramStats::process(const char* input_fname) {
     }
 }
 
+void TrigramStats::t2i(char* trigram, unslong* index) {
+    (*index) = 0;
+    for (unsint i = 0; i < LEN; i++) {
+        if ((short) trigram[i] < 32) {
+            trigram[i] = ' ';
+        }
+    }
+    memcpy(index, trigram, LEN * sizeof (char));
+}
+
+void TrigramStats::i2t(const unslong* index, char* trigram) {
+    memcpy(trigram, index, LEN * sizeof (char));
+    trigram[LEN] = '\0';
+}
+
+
 void TrigramStats::process_text(char* text, size_t size) {
 
     double time = omp_get_wtime();

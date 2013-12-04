@@ -73,8 +73,11 @@ void TrigramStats::process(const char* input_fname) {
 }
 
 void TrigramStats::trigram2index(char* trigram, tr_int* index) {
-    // 16776769 - endianism-safe 0xFFFF00 => cast to 3 chars and '\0'
-    (*index) = (*((tr_int*) trigram)) & 16776769;
+
+    trigram[0] = (trigram[0] < 32) ? ' ' : trigram[0];
+    trigram[1] = (trigram[1] < 32) ? ' ' : trigram[1];
+    trigram[2] = (trigram[2] < 32) ? ' ' : trigram[2];
+    (*index) = 0;
     memcpy(index, trigram, LEN * sizeof (char));
 }
 

@@ -34,11 +34,11 @@ void Timer::add(double interval) {
 std::ostream& operator<<(std::ostream& os, const Timer & timer) {
     switch (timer.format) {
         case 'm':
-            os << timer.time;
+            os << timer.time * 1000.0;
             break;
         case 'h':
         default:
-            os << timer.time << 's';
+            os << timer.time*1000.0 << 'ms';
             break;
     }
     return os;

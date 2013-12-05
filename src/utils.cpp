@@ -13,7 +13,7 @@ int long2a(u_long number, char** str) {
         length++;
     }
     (*str) = new char[length + 1];
-    return sprintf((*str), "%zu", number);
+    return sprintf((*str), "%lu", number);
 }
 
 u_long a2long(char* str) {

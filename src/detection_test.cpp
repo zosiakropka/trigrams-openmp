@@ -59,7 +59,7 @@ void detect(char* text_fname, bool print_results, u_int iterations) {
     if (print_results) {
         for (u_int i = 0; i < detector.ref_lang_count; i++) {
             LangDetector::entry entry = detector[i];
-            cout << entry.lang << ": " << entry.probability * 100 << '%' << endl;
+            cout << "[" << entry.lang << "] compliance ratio: " << ": " << entry.probability << " / 1.0" << endl;
         }
     }
 }

@@ -86,10 +86,13 @@ void TrigramStats::process_text(char* text, u_long txt_len) {
     double time = omp_get_wtime();
     #pragma omp parallel for
     for (tr_int tr_i = 0; tr_i < txt_len - 2; tr_i++) {
+
         tr_int index;
         trigram2index(text + tr_i, &index);
-        #pragma omp atomic
-        occurances[index]++;
+        if (index != 0x202000 && index != 0x002020) {
+            #pragma omp atomic
+            occurances[index]++;
+        }
     }
     time = (omp_get_wtime() - time);
     timer->add(time);

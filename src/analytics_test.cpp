@@ -30,8 +30,8 @@ int main(int argc, char** argv) {
 
 
     if (argc < 4) {
-        string args = "<count> <lang> <file1> [<file2> ...]";
-        usage(argv[0], args.c_str());
+        const char* args = "<count> <lang> <file1> [<file2> ...]";
+        usage(argv[0], args);
     }
 
     int threads = atoi(argv[1]);

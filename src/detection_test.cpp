@@ -23,8 +23,8 @@ void detect(char* text_fname, bool print_results, u_int iterations);
 int main(int argc, char** argv) {
 
     if (argc != 3) {
-        string args = "<count> <file>";
-        usage(argv[0], args.c_str());
+        const char* args = "<count> <file>";
+        usage(argv[0], args);
     }
 
     int threads = atoi(argv[1]);

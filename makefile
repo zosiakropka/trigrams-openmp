@@ -32,3 +32,6 @@ clean:
 	rm -rf objects
 	rm -rf analytics_test
 	rm -rf detection_test
+
+clean_dat:
+	rm *.dat

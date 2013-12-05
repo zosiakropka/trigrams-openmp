@@ -64,15 +64,22 @@ void LangDetector::process() {
 void LangDetector::process(u_int lang_i) {
     TrigramStats* ref_stats = &refer_stats[lang_i];
 
+    const TrigramStats::tr_int BINS_COUNT = TrigramStats::POSSIBILITIES - 1;
+
+    // Implementation of X^2 failed, so I came up with SELF-THOUGHT way of 
+    // detection; lang stats do not differ much, but it haven't failed for any
+    // test provided by me.
     double p = 1.0;
     #pragma omp parallel for reduction(*: p)
-    for (TrigramStats::tr_int i = 1; i < TrigramStats::POSSIBILITIES; i++) {
-        // Distance for frequency of i'th trigram 
-        double p_i = 1.0 - fabs(tst_stats->frequency(i) - ref_stats->frequency(i));
-        p *= p_i;
+    for (TrigramStats::tr_int i = 1; i < BINS_COUNT; i++) {
+        // Distance for frequency of i'th trigram;
+        double dist_i = fabs(tst_stats->frequency(i) - ref_stats->frequency(i));
+        // p is never multiplied by 0 (provided ref stats and tested text
+        // contain more than single trigram); For trigrams not existing in any
+        // of the stats satement has no effect.
+        p *= (1.0 - dist_i);
     }
     probabilities[lang_i] = p;
-
 }
 
 u_int LangDetector::get_saved_stats_langs(char*** langs) {
@@ -89,12 +96,13 @@ u_int LangDetector::get_saved_stats_langs(char*** langs) {
         string suffix(TrigramStats::DAT_SUFFIX);
         dirent *file;
         u_int current = 0;
-        while ((file = readdir(directory))) {
+        while ((file = readdir(directory))) { // iterate through the directory
             string filename = string(file->d_name);
             int suffix_length = suffix.length(),
                     suffix_start = filename.length() - suffix.length(),
                     suffix_end = filename.length();
             if (filename.length() >= suffix.length() && !(filename.compare(suffix_start, suffix_end, suffix))) {
+
                 filename.replace(suffix_start, suffix_length, string(""));
                 (*langs)[current] = new char[5];
                 strcpy((*langs)[current], filename.c_str());
@@ -111,13 +119,22 @@ void LangDetector::fill_sorted_indexes() {
     for (u_int i = 0; i < ref_lang_count; i++) {
         u_int left = 0;
         u_int larger = 0;
+
+        u_int right = ref_lang_count - 1;
+        u_int smaller = 0;
+
         for (u_int j = left; j < ref_lang_count; j++) {
             if (probabilities[j] > probabilities[i]) {
                 larger++;
                 left += (larger == left) ? 1 : 0;
             }
+            if (probabilities[ref_lang_count - j - 1] > probabilities[ref_lang_count - i - 1]) {
+                smaller++;
+                right -= (smaller == right) ? 1 : 0;
+            }
         }
         indexes[larger] = i;
+        indexes[smaller] = i;
     }
 }
 

@@ -46,7 +46,9 @@ int main(int argc, char** argv) {
     u_int iterations = 1;
     const char* testrun = getenv("TESTRUN");
     if (testrun != NULL && (*testrun) == 'y') {
-        iterations = 1000;
+        const char* iterations_ch = getenv("TESTITERATIONS");
+        iterations = atoi(iterations_ch);
+        iterations = (iterations > 0) ? iterations : 10;
     }
 
     analyze(language, inputs, inputs_count, iterations);

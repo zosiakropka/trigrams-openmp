@@ -25,28 +25,31 @@ int main(int argc, char** argv) {
     if (argc != 3) {
         const char* args = "<count> <file>";
         usage(argv[0], args);
+    } else {
+        int threads = atoi(argv[1]);
+        char* text_fname = argv[2];
+
+        if (threads != 0) {
+            omp_set_num_threads(threads);
+        }
+
+        bool print_results = true;
+        u_int iterations = 1;
+        const char* testrun = getenv("TESTRUN");
+        if (testrun != NULL && (*testrun) == 'y') {
+            print_results = false;
+            const char* iterations_ch = getenv("TESTITERATIONS");
+            iterations = atoi(iterations_ch);
+            iterations = (iterations > 0) ? iterations : 10;
+        }
+
+        detect(text_fname, print_results, iterations); // print results only first time
+        Timer* timer = Timer::instance();
+        cout << (*timer) << timer->delimiter;
+
+        return 0;
     }
 
-    int threads = atoi(argv[1]);
-    char* text_fname = argv[2];
-
-    if (threads != 0) {
-        omp_set_num_threads(threads);
-    }
-
-    bool print_results = true;
-    u_int iterations = 1;
-    const char* testrun = getenv("TESTRUN");
-    if (testrun != NULL && (*testrun) == 'y') {
-        print_results = false;
-        iterations = 20;
-    }
-
-    detect(text_fname, print_results, iterations); // print results only first time
-    Timer* timer = Timer::instance();
-    cout << (*timer) << timer->delimiter;
-
-    return 0;
 }
 
 void detect(char* text_fname, bool print_results, u_int iterations) {

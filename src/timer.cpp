@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const Timer & timer) {
             break;
         case 'h':
         default:
-            os << timer.time*1000.0 << 'ms';
+            os << timer.time * 1000.0 << "ms";
             break;
     }
     return os;
